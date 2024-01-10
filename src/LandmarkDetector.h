@@ -31,13 +31,13 @@ namespace cam {
             virtual ~LandmarkDetector();
 
             // no copy, no copy assignment
-            LandmarkDetector(const LandmarkDetector & other) = delete;
-            LandmarkDetector& operator=(const LandmarkDetector & other) = delete;
+            LandmarkDetector(const LandmarkDetector& other) = delete;
+            LandmarkDetector& operator=(const LandmarkDetector& other) = delete;
 
 
         public:
 
-            void pushFrame(Frame * frame) override;
+            void pushFrame(Frame* frame) override;
 
 
         public:
@@ -52,8 +52,8 @@ namespace cam {
 
         private:
 
-            TLandmarkDetectorTransaction makePrediction(std::unique_ptr<Frame> & frame, std::list<std::promise<TLandmarkDetectorTransaction>> & promises);
-            bool preprocess(std::unique_ptr<Frame> & frame, cv::Mat & output);
+            TLandmarkDetectorTransaction makePrediction(const std::unique_ptr<Frame>& frame);
+            bool preprocess(const std::unique_ptr<Frame>& frame, cv::Mat& output);
 
 
         private:

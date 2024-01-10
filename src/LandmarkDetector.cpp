@@ -8,7 +8,7 @@ cam::LandmarkDetector::LandmarkDetector() :
 {
     try {
         mModel = cv::dnn::readNetFromONNX(mModelFilePath);
-    } catch(cv::Exception & e) {
+    } catch(cv::Exception& e) {
         Logger::suicide(std::format("read model exception: {}", e.what()));
     }
     if (mModel.empty()) {
@@ -31,7 +31,7 @@ cam::LandmarkDetector::~LandmarkDetector() {
     TLandmarkDetectorTransaction returnValue = TLandmarkDetectorTransaction();
     returnValue.mSuccess = false;
     returnValue.mMessage = "exiting thread, promises not processed";
-    for(auto & promise : mPromises) {
+    for(auto& promise : mPromises) {
         promise.set_value(returnValue);
     }
     mPromises.clear();
@@ -65,7 +65,7 @@ std::future<cam::TLandmarkDetectorTransaction> cam::LandmarkDetector::predict() 
 }
 
 
-void cam::LandmarkDetector::pushFrame(Frame * frame) {
+void cam::LandmarkDetector::pushFrame(Frame* frame) {
     // if the frame is null, we ignore it
     if( ! frame ) {
         return;
@@ -142,13 +142,13 @@ void cam::LandmarkDetector::run() {
 
         if(predict) {
             // make prediction from current frame
-            returnValue = this->makePrediction(frame, promises);
+            returnValue = this->makePrediction(frame);
         }
 
 
         // set the result for all the current promises
         // -> same result since they are all for the same frame
-        for(auto & promise : promises) {
+        for(auto& promise : promises) {
             promise.set_value(returnValue);
         }
 
@@ -157,13 +157,9 @@ void cam::LandmarkDetector::run() {
 }
 
 
-cam::TLandmarkDetectorTransaction cam::LandmarkDetector::makePrediction(std::unique_ptr<Frame> frame, std::list<std::promise<TLandmarkDetectorTransaction>> & promises) {
+cam::TLandmarkDetectorTransaction cam::LandmarkDetector::makePrediction(const std::unique_ptr<Frame>& frame) {
     if( ! frame ) {
         Logger::error("frame is NULL");
-        return false;
-    }
-    if(promises.empty()) {
-        Logger::error("empty promises");
         return false;
     }
 
@@ -203,7 +199,7 @@ cam::TLandmarkDetectorTransaction cam::LandmarkDetector::makePrediction(std::uni
 
         returnValue = TLandmarkDetectorTransaction(true, "", crossProbability, crossXCenter, crossYCenter, crossWidth, crossHeight);
 
-    } catch( cv::Exception & e ) {
+    } catch(cv::Exception& e) {
         Logger::message(std::format("cross detection prediction exception caught: {}", e.what()));
         returnValue.mSuccess = false;
         returnValue.mMessage = "failed to make prediction";
@@ -213,7 +209,7 @@ cam::TLandmarkDetectorTransaction cam::LandmarkDetector::makePrediction(std::uni
 }
 
 
-bool cam::LandmarkDetector::preprocess(std::unique_ptr<Frame>, cv::Mat & output) {
+bool cam::LandmarkDetector::preprocess(const std::unique_ptr<Frame>& frame, cv::Mat& output) {
     if( ! frame ) {
         Logger::error("frame is NULL");
         return false;
@@ -270,7 +266,7 @@ bool cam::LandmarkDetector::preprocess(std::unique_ptr<Frame>, cv::Mat & output)
 
         // 7. convert input to NCHW dimension array, as expected by the model
         output = cv::dnn::blobFromImage(input, 1.0, cv::Size(mModelInputWidth, mModelInputHeight), cv::Scalar(0, 0, 0), false, false);
-    } catch( cv::Exception & e ) {
+    } catch(cv::Exception& e) {
         Logger::message(std::format("cross detection preprocess exception caught: {}", e.what()));
         return false;
     }
